@@ -1,27 +1,40 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-dotenv.config();
- 
 
-const port = process.env.PORT || 3000; // default port to listen on
+dotenv.config(); // Load environment variables
 
+const port = process.env.PORT || 3000; // Default port to listen on
 const MONGO_URI = process.env.MONGO_URI;
 
-const app = express(); 
+const app = express();
 
-app.get("/",(req,res)=>{
-    res.send("E-commerce backend successfully");
-})
+// Validate environment variables
+if (!MONGO_URI) {
+  console.error("Error: MONGO_URI is not defined in your .env file");
+  process.exit(1); // Exit if MONGO_URI is missing
+}
 
-mongoose.connect(MONGO_URI)
-.then((check) => {
-    app.listen(port,()=>{
-        console.log(`Server is running on port ${port}`);
-    })
-}).catch((err) => {
-    console.log("The server is not connected");
-    console.log(err)
+// Middleware to parse request bodies
+app.use(express.json()); // Parse incoming JSON requests
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("E-commerce backend successfully");
 });
+
+// Connect to MongoDB and start the server
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("The server is not connected to MongoDB:", err.message);
+    process.exit(1); // Terminate the process
+  });
 
 
